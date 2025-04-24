@@ -1,0 +1,98 @@
+nodes:
+- id: generated-source-node
+  source:
+    table: {project: sfsc-srtt-shared, dataset: next25_demo, table: raw_keyboard_data}
+  steps:
+  - id: ex-405082d075b6b4fe
+    description: Replaces the value '1' with 'True' in the is_he_val column.
+    columnStep:
+      columnName: is_he_val
+      expression: {sql: CASE WHEN is_he_val = '1' THEN 'True' ELSE is_he_val END}
+    generated:
+      sourceColumns: [is_he_val]
+      columnStepType: COLUMN_STEP_TYPE_REPLACE_COLUMN
+  - id: ex-cd3f4eda6b83982
+    description: Transforms '0' to 'False', 'True' to 'True', and any other value
+      to NULL.
+    columnStep:
+      columnName: is_he_val
+      expression: {sql: CASE WHEN is_he_val = 'True' THEN 'True' WHEN is_he_val =
+          '0' THEN 'False' ELSE NULL END}
+    generated:
+      sourceColumns: [is_he_val]
+      columnStepType: COLUMN_STEP_TYPE_REPLACE_COLUMN
+  - id: ex-18abff64eef7eef9
+    description: Extracts only the numerical part of the layout string by removing
+      any non-numeric characters.
+    columnStep:
+      columnName: layout
+      expression: {sql: 'REGEXP_REPLACE(layout, r''[^0-9]+'', '''')'}
+    generated:
+      sourceColumns: [layout]
+      columnStepType: COLUMN_STEP_TYPE_REPLACE_COLUMN
+  - id: manual-columnStep-F3BA42EC-6C73-4697-AB3D-F9A9CB586311
+    description: This expression extracts the review_details from the JSON string.
+    columnStep:
+      columnName: review_details
+      expression: {sql: 'JSON_EXTRACT_SCALAR(review, ''$.review_details'')'}
+    generated: {columnStepType: COLUMN_STEP_TYPE_ADD_COLUMN}
+  - id: manual-columnStep-EFF6373D-EBC5-4F64-A1D5-16272188633C
+    description: Extract the username from the JSON string in the review column
+    columnStep:
+      columnName: reviewer
+      expression: {sql: 'JSON_EXTRACT_SCALAR(review, r''$.username'')'}
+    generated: {columnStepType: COLUMN_STEP_TYPE_ADD_COLUMN}
+  - id: n-7a2ee644bce85cd4
+    description: This expression converts the string values 'True' to boolean TRUE
+      and all other values to FALSE.
+    columnStep:
+      columnName: is_he_val
+      expression: {sql: CASE WHEN is_he_val = 'True' THEN TRUE ELSE FALSE END}
+    generated:
+      sourceColumns: [is_he_val]
+      columnStepType: COLUMN_STEP_TYPE_REPLACE_COLUMN
+  generated:
+    sections:
+    - {type: SECTION_SOURCE_TABLE, label: Read from BigQuery table sfsc-srtt-shared.next25_demo.raw_keyboard_data}
+    - type: SECTION_SQL
+      label: |
+        Extract review details and reviewer username from JSON, clean layout by removing non-numeric characters, convert 'is_he_val' to boolean, and select all columns.
+    - {type: SECTION_DESTINATION_TABLE, label: Write into BigQuery table sfsc-srtt-shared.next25_demo.cleansed_keyboard_data}
+    outputSchema:
+      field:
+      - {name: product_name, type: STRING, mode: NULLABLE}
+      - {name: is_he_val, type: BOOLEAN, mode: NULLABLE}
+      - {name: switch_type, type: STRING, mode: NULLABLE}
+      - {name: layout, type: STRING, mode: NULLABLE}
+      - {name: review, type: STRING, mode: NULLABLE}
+      - {name: review_details, type: STRING, mode: NULLABLE}
+      - {name: reviewer, type: STRING, mode: NULLABLE}
+    sourceGenerated:
+      sourceSchema:
+        tableSchema:
+          field:
+          - {name: product_name, type: STRING, mode: NULLABLE}
+          - {name: is_he_val, type: STRING, mode: NULLABLE}
+          - {name: switch_type, type: STRING, mode: NULLABLE}
+          - {name: layout, type: STRING, mode: NULLABLE}
+          - {name: review, type: STRING, mode: NULLABLE}
+    destinationGenerated:
+      schema:
+        field:
+        - {name: product_name, type: STRING, mode: NULLABLE}
+        - {name: is_he_val, type: BOOLEAN, mode: NULLABLE}
+        - {name: switch_type, type: STRING, mode: NULLABLE}
+        - {name: layout, type: STRING, mode: NULLABLE}
+        - {name: review, type: STRING, mode: NULLABLE}
+        - {name: review_details, type: STRING, mode: NULLABLE}
+        - {name: reviewer, type: STRING, mode: NULLABLE}
+      selectedFieldsExpression: CAST(`product_name` AS STRING) AS `product_name`,CAST(`is_he_val`
+        AS BOOLEAN) AS `is_he_val`,CAST(`switch_type` AS STRING) AS `switch_type`,CAST(`layout`
+        AS STRING) AS `layout`,CAST(`review` AS STRING) AS `review`,CAST(`review_details`
+        AS STRING) AS `review_details`,CAST(`reviewer` AS STRING) AS `reviewer`
+  destination:
+    table: {project: sfsc-srtt-shared, dataset: next25_demo, table: cleansed_keyboard_data}
+generated:
+  location: us-central1
+  description: |
+    Extract review details and reviewer username from JSON, clean the layout column by removing non-numeric characters, and convert the is_he_val column to boolean.
